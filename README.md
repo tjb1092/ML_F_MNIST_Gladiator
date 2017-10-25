@@ -3,8 +3,8 @@ Seeing which group member can get the best optimization to classify Fashion MNIS
 
 ## Algorithm Assignment
 
-..* SVM - Tony
-..* Neural Network - Akhila 
-..* Naive Bayes - Priya 
-..* k-means - Aparna
++ SVM - Tony
++ Neural Network - Akhila 
++ Naive Bayes - Priya 
++ k-means - Aparna
 
