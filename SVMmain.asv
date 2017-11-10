@@ -8,18 +8,12 @@ y_test = loadMNISTLabels('t10k-labels-idx1-ubyte');
 pairwise = nchoosek(0:9,2);
 svmModel = cell(size(pairwise,1),1);
 predTest = zeros(size(x_test, 1), numel(svmModel));
-timer= tic;
 for k = 1:numel(svmModel)
     idx = any(bsxfun(@eq,y_train,pairwise(k,:)),2);
     
-    svmModel{k} = fitcsvm(x_train(idx,:),y_train(idx),'Standardize',true,'KernelFunction','RBF',...
-    'KernelScale','auto','BoxConstraint',2.8);
+    svmModel{k} = fitcsvm(x_train(idx,:),y_train(idx),'KernelFunction','RBF','KernelScale',0.0073);
     
-    predTest(:,k) = predict(svmModel{k},x_test);
-    k;
-    
+    predTest(:,k) = predict(svmModel{k},x_test');
+    k
 end
-toc(timer)
 predictedy = mode(predTest,2);
-[C,order] = confusionmat(y_test, predictedy)
-results = sum(predictedy == y_test)/length(y_test)
