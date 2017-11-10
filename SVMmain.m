@@ -5,9 +5,13 @@ y_train = loadMNISTLabels('train-labels-idx1-ubyte');
 x_test = loadMNISTImages('t10k-images-idx3-ubyte');
 x_test = x_test';
 y_test = loadMNISTLabels('t10k-labels-idx1-ubyte');
+x_test = x_test / 255.0 * 2 - 1;
+x_train = x_train / 255.0 * 2 - 1;
 pairwise = nchoosek(0:9,2);
 svmModel = cell(size(pairwise,1),1);
 predTest = zeros(size(x_test, 1), numel(svmModel));
+
+
 timer= tic;
 for k = 1:numel(svmModel)
     idx = any(bsxfun(@eq,y_train,pairwise(k,:)),2);
