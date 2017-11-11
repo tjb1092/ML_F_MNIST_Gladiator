@@ -6,25 +6,34 @@ y_train = loadMNISTLabels('train-labels-idx1-ubyte');
 x_test = loadMNISTImages('t10k-images-idx3-ubyte');
 x_test = x_test';
 y_test = loadMNISTLabels('t10k-labels-idx1-ubyte');
+%Standardizing the pixel data
 x_test = x_test / 255.0 * 2 - 1;
 x_train = x_train / 255.0 * 2 - 1;
 
-
-rng(1);
-t = templateSVM('KernelFunction','RBF',...
-    'KernelScale','auto','BoxConstraint',2.8);
+% c = cvpartition(length(x_train),'KFold',10);
+% sigma = optimizableVariable('sigma',[1e-5,1e5],'Transform','log');
+% box = optimizableVariable('box',[1e-5,1e5],'Transform','log');
+% rng(1);
+% 
+% minfn = @(z)kfoldLoss(fitcecoc(x_train,y_train,...
+%     'Learners',templateSVM('KernelFunction','RBF',...
+%     'KernelScale',z.sigma,'BoxConstraint',z.box)));
+% OptResults = bayesopt(minfn,[sigma,box],'IsObjectiveDeterministic',true,...
+%     'AcquisitionFunctionName','expected-improvement-plus')
 muhtime = tic;
-Md1 = fitcecoc(x_train,y_train,'Learners',t);
+% 
+% z(1) = OptResults.XAtMinObjective.sigma;
+% z(2) = OptResults.XAtMinObjective.box;
+
+SVMModel = fitcecoc(x_train,y_train,...
+    'Learners',templateSVM('KernelFunction','RBF',...
+    'KernelScale','auto','BoxConstraint',10000));
+
 toc(muhtime);
-Md1.ClassNames
-CodingMat = Md1.CodingMatrix;
+SVMModel.ClassNames
+CodingMat = SVMModel.CodingMatrix;
 
-% CVMd1 = crossval(Md1);
-% toc(muhtime);
-% oosLoss = kfoldLoss(CVMd1)
-% toc(muhtime);
-
-predicted = predict(Md1,x_test);
+predicted = predict(SVMModel,x_test);
 toc(muhtime);
 
 [C,order] = confusionmat(y_test, predicted)
