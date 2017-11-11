@@ -24,13 +24,16 @@ muhtime = tic;
 % 
 % z(1) = OptResults.XAtMinObjective.sigma;
 % z(2) = OptResults.XAtMinObjective.box;
+%y = num2str(y_train);
 
-KNNModel = fitcknn(x_train,y_train,'NumNeighbors',4);
-rloss = resubLoss(KNNModel)
-CVMdl = crossval(KNNModel);
-kloss = kfoldLoss(CVMdl)
+%for k = 1:length(y)
+ %  yt{k} = y(k);
+%end
 
-predicted = predict(KNNModel,x_test);
+
+LogisticReg = mnrfit(x_train,y_train);%ordinal(y_train,{'0','1','2','3','4','5','6','7','8','9'},[],[0,1,2,3,4,5,6,7,8,9]),'model','ordinal');
+
+predicted = predict(LogisticReg,x_test);
 toc(muhtime);
 
 [C,order] = confusionmat(y_test, predicted)
