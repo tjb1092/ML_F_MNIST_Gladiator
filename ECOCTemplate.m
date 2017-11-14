@@ -12,19 +12,24 @@ x_test = x_test / 255.0 * 2 - 1;
 x_train = x_train / 255.0 * 2 - 1;
 timing = tic;
 
+%Define the SVM function that will be used to train on the data.
+t = templateSVM('KernelFunction','rbf',...
+    'KernelScale','auto','BoxConstraint',2.8);
+
+% Create an error correcting output coding model to allow for multi-class
+% SVM classification
 SVMModel = fitcecoc(x_train,y_train,...
-    'Learners',templateSVM('KernelFunction','rbf',...
-    'KernelScale','auto','BoxConstraint',2.8));
+    'Learners',t);
 
+%Display training time.
 toc(timing);
-SVMModel.ClassNames
-CodingMat = SVMModel.CodingMatrix;
-% 
-% CVMdl = crossval(SVMModel);
-% oosLoss = kfoldLoss(CVMdl)
 
+%Predict on the test set.
 predicted = predict(SVMModel,x_test);
+
+%Display inference time.
 toc(timing);
 
+%Visualize the classification results.
 [C,order] = confusionmat(y_test, predicted)
 results = sum(predicted == y_test)/length(y_test)
