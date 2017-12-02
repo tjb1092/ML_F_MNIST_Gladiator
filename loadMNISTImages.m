@@ -1,4 +1,4 @@
-function images = loadMNISTImages(filename)
+function [X,images] = loadMNISTImages(filename)
 %loadMNISTImages returns a 28x28x[number of MNIST images] matrix containing
 %the raw MNIST images
 
@@ -23,8 +23,8 @@ images = permute(images,[2 1 3]);
 fclose(fp);
 
 % Reshape to #pixels x #examples
-images = reshape(images, size(images, 1) * size(images, 2), size(images, 3));
+X = reshape(images, size(images, 1) * size(images, 2), size(images, 3));
 % Convert to double and rescale to [0,1]
-images = double(images) / 255;
+X = double(X); %/ 255;
 
 end
