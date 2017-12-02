@@ -1,5 +1,5 @@
 clc;clear all; close all;
-addpath(genpath('drtoolbox'))
+addpath(genpath('drtoolbox')); %Add Data Visualization Tools.
 [x_train, image_train] = loadMNISTImages('train-images-idx3-ubyte');
 x_train = x_train';
 y_train = loadMNISTLabels('train-labels-idx1-ubyte');
