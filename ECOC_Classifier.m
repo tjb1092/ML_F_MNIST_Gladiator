@@ -21,15 +21,19 @@ end
 
 timing = tic;
 
+%Bayesian Optimization only works on 2016b onward.
+% rng default
+% Mdl = fitcecoc(X,Y,'OptimizeHyperparameters','auto',...
+%     'HyperparameterOptimizationOptions',struct('AcquisitionFunctionName',...
+%     'expected-improvement-plus'))
+
 %Define the SVM function that will be used to train on the data.
 t = templateSVM('KernelFunction','rbf',...
     'KernelScale','auto','BoxConstraint',2.8, 'Verbose', 1);
 
 % Create an error correcting output coding model to allow for multi-class
 % SVM classification
-SVMModel = fitcecoc(x_train,y_train,...
-    'Learners',t);
-
+SVMModel = fitcecoc(x_train,y_train,'Learners', t);
 %Display training time.
 toc(timing);
 
