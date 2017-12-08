@@ -13,10 +13,19 @@ end
 timing = tic;
 % Create an error correcting output coding model to allow for multi-class
 % Naive Bayes classification
+% NB_Model = fitcnb(x_train,y_train, 'DistributionNames','kernel','Kernel','normal','Width',0.5);
+disp('Training Naive Bayes Model');
 NB_Model = fitcnb(x_train,y_train);
 %Display training time.
 toc(timing);
-
+disp('Cross-Validating Naive Bayes Model');
+CVMdl = crossval(NB_Model);  %10-fold crossval
+toc(timing);
+disp('Display k-fold out-of-sample Loss');
+oosLoss = kfoldLoss(CVMdl) %Compute score
+toc(timing);   
+   
+disp('Predicting Test Labels Naive Bayes Model');
 predicted = predict(NB_Model,x_test);
 
 %Display inference time.
@@ -24,8 +33,7 @@ toc(timing);
 
 %Visualize the classification results.
 [C,order] = confusionmat(y_test, predicted)
-plotconfusion(y_test, predicted)
-Accuracy = sum(predicted == y_test)/length(y_test);
+Accuracy = sum(predicted == y_test)/length(y_test)
 
 end
 

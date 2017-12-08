@@ -18,6 +18,9 @@ visualizeData(x_test,y_test, image_test);
 
 SVM_accuracy = ECOC_Classifier(x_train, y_train, x_test, y_test);
 %% Perform K - Nearest Neighbors Classification
+%Initial grid-search to find best distance metric
+[KNN_Accuracy, KNNModel, KNN_GridSearch ] = KNN_Classifier( x_train, y_train, x_test, y_test, 0);
+%Second grid-search to find the best k.
 
 %% Perform Naive Bayes Classification
 
