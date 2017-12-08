@@ -1,77 +1,92 @@
-function [ Accuracy ] = ECOC_Classifier( x_train, y_train, x_test, y_test )
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+function [ SVMModel, GridSearch ] = ECOC_Classifier( x_train, y_train, x_test, y_test, mode )
+% Performs the optimization and training a multi-class Support Vector Machine.
+% Stores the generated model for future use as a .mat file. 
+% Looked at the rbf and linear kernel using the 'auto' scaling option.
+% Specific scaling parameters were chosen, but these were found to be
+% significantly more computationally complex (upwards of 10x longer to 
+% train with cross-validations taking upwards of 12hr per parameter set)  
+% and yielded worse, or equivalent classification accuracies. Grid-search
+% was therefore performed on the BoxConstraint (i.e. cost) parameter.
 
-Kernel(1).type = 'rbf';
-Kernel(1).Scale = {1e-1,1,10};
-Kernel(1).BoxConstraint = [1e-1, 1, 10];
+if mode == 1
+    GridSearch(1).type = 'rbf';
+    GridSearch(1).Scale = {'auto'};
+    GridSearch(1).BoxConstraint = [1e-1, 1, 10];
+    GridSearch(1).Score = [];
+    GridSearch(2).type = 'linear';
+    GridSearch(2).Scale = {'auto'};
+    GridSearch(2).BoxConstraint = [1e-1, 1, 10];
+    GridSearch(2).Score = [];
+else
+    GridSearch.type = 'rbf';
+    GridSearch.Scale = 'auto';
+    GridSearch.BoxConstraint = 10;
+    GridSearch.Score = [];
+end
+if mode == 1
+    %Grid-Search to find optimal parameter.
+    for i = 1:length(GridSearch)
+        for j = 1:length(GridSearch(i).Scale)
+            for k = 1:length(GridSearch(i).BoxConstraint)
+                
+                fprintf('Kernel Type: %s\n', GridSearch(i).type);
+                fprintf('Kernel Scale: %s\n',GridSearch(i).Scale);
+                fprintf('Kernel Box Constraint: %0.2f\n',GridSearch(i).BoxConstraint(k));
+                timing = tic;
+                disp('Training SVM Model');
+                t = templateSVM('KernelFunction',GridSearch(i).type,...
+        'KernelScale',GridSearch(i).Scale{j},'BoxConstraint',GridSearch(i).BoxConstraint(k));
 
-Kernel(1).type = 'linear';
-Kernel(1).Scale = {'auto',1e-1,1,10};
-Kernel(1).BoxConstraint = [1e-1, 1, 10];
+                % Create an error correcting output coding model to allow for multi-class
+                % SVM classification
+                SVMModel = fitcecoc(x_train,y_train,'Learners', t);
+                toc(timing);
 
-%Grid-Search to find optimal parameter.
-for i = 1:length(Kernel)
-    for j = 1:length(Kernel(i).Scale)
-        for k = 1:length(Kernel(i).BoxConstraint)
- 
-            timing = tic;
-
-            t = templateSVM('KernelFunction',Kernel(i).type,...
-    'KernelScale',Kernel(i).Scale{j},'BoxConstraint',Kernel(i).BoxConstraint(k), 'Verbose', 0);
-            
-            % Create an error correcting output coding model to allow for multi-class
-            % SVM classification
-            SVMModel = fitcecoc(x_train,y_train,'Learners', t);
-            toc(timing);
-            CVMdl = crossval(SVMModel);  %10-fold crossval
-            toc(timing);
-            disp('Kernel Type');
-            disp(Kernel(i).type)
-            disp('Kernel Scale');
-            disp(Kernel(i).Scale{j})
-            disp('Kernel Box Constraint');
-            disp(Kernel(i).BoxConstraint(k))
-            
-            oosLoss = kfoldLoss(CVMdl) %Compute score
-            toc(timing);
+                disp('Cross-Validating SVM Model');
+                CVMdl = crossval(SVMModel);  %10-fold crossval
+                toc(timing);
+   
+                disp('Computing OOS Loss');
+                oosLoss = kfoldLoss(CVMdl); %Compute score
+                fprintf('OOS Loss Score: %0.4f\n',oosLoss);
+                GridSearch.Score(end+1) = oosLoss;
+                toc(timing);
+            end
         end
     end
+else
+    timing = tic;
+
+    disp('Training SVM Model');
+    %Define the SVM function that will be used to train on the data.
+    t = templateSVM('KernelFunction',GridSearch.type,...
+        'KernelScale',GridSearch.Scale,'BoxConstraint',GridSearch.BoxConstraint);
+
+    % Create an error correcting output coding model to allow for multi-class
+    % SVM classification
+    SVMModel = fitcecoc(x_train,y_train,'Learners', t);
+    %Display training time.
+
+    %Save model for future use.
+    save('SVMModel.mat','SVMModel');
+    toc(timing);
+    disp('Predicting Test Labels with SVM Model');
+    %Predict on the test set.
+    predicted = predict(SVMModel,x_test);
+
+    %Display inference time.
+    toc(timing);
+
+    %Visualize the classification results.
+    [C,order] = confusionmat(y_test, predicted);
+    %print confusion matrix
+    fprintf('Label:\t\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\n', order.') %Write col header
+    fprintf('            -------------------------------------\n'); %hline
+    fprintf('%i | \t\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\n', [order,C].')% Write Rows
+
+    Accuracy = sum(predicted == y_test)/length(y_test);
+    GridSearch.Score(end+1) = Accuracy;
+    fprintf('\nClassification Accuracy: %0.4f\n',Accuracy);
 end
-
-
-timing = tic;
-
-%Bayesian Optimization only works on 2016b onward.
-% rng default
-% Mdl = fitcecoc(X,Y,'OptimizeHyperparameters','auto',...
-%     'HyperparameterOptimizationOptions',struct('AcquisitionFunctionName',...
-%     'expected-improvement-plus'))
-
-%Define the SVM function that will be used to train on the data.
-t = templateSVM('KernelFunction','rbf',...
-    'KernelScale','auto','BoxConstraint',2.8, 'Verbose', 1);
-
-% Create an error correcting output coding model to allow for multi-class
-% SVM classification
-SVMModel = fitcecoc(x_train,y_train,'Learners', t);
-%Display training time.
-toc(timing);
-
-%Predict on the test set.
-predicted = predict(SVMModel,x_test);
-
-%Display inference time.
-toc(timing);
-
-% CVSVMModel = crossval(SVMModel);
-% [~,scorePred] = kfoldPredict(CVSVMModel);
-% outlierRate = mean(scorePred<0)  % Represents the fraction considered outliers.
-
-
-%Visualize the classification results.
-[C,order] = confusionmat(y_test, predicted)
-Accuracy = sum(predicted == y_test)/length(y_test);
-
 end
 

@@ -26,6 +26,6 @@ fclose(fp);
 norm_images = mat2gray(images);  % Convert to normalized images.
 X = reshape(norm_images, size(images, 1) * size(images, 2), size(images, 3));
 % Convert to double and rescale to [0,1]
-X = double(X); %/ 255;
+X = double(X)'; %/ 255;
 
 end
